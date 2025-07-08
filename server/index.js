@@ -1,4 +1,3 @@
-// server/index.js
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
@@ -9,10 +8,8 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 
-// ✅ Use full path to Python from your virtual environment
-const pythonPath = `"C:\\Users\\Salusha\\YT Summary\\YouTube-Video-Summary-App\\python-summarizer\\.env\\Scripts\\python.exe"`;
-
-// ✅ Always use absolute path and wrap in quotes
+// ✅ Corrected path
+const pythonPath = `"C:\\Users\\Salusha\\YT_Summary\\python-summarizer\\.env\\Scripts\\python.exe"`;
 const scriptPath = `"${path.join(__dirname, '../python-summarizer/summarize.py')}"`;
 
 app.post('/summarize', (req, res) => {
