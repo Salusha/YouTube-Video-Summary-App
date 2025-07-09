@@ -17,7 +17,7 @@ client/coverage/
 server/.env
 
 # Python (python-summarizer)
-python-summarizer/.env/
+python-summarizer/.venv/
 python-summarizer/__pycache__/
 *.py[cod]
 *.egg
