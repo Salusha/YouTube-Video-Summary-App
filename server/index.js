@@ -9,7 +9,7 @@ app.use(cors());
 app.use(bodyParser.json());
 
 // ✅ Corrected path
-const pythonPath = `"C:\\Users\\Salusha\\YT_Summary\\python-summarizer\\.venv\\Scripts\\python.exe"`;
+const pythonPath = `"C:\\Users\\Salusha\\YT_Summary\\python-summarizer\\.env\\Scripts\\python.exe"`;
 const scriptPath = `"${path.join(__dirname, '../python-summarizer/summarize.py')}"`;
 
 app.post('/summarize', (req, res) => {

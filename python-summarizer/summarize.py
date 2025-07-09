@@ -21,15 +21,17 @@
 #     summary = summarize_text(transcript)
 #     print(json.dumps({"summary": summary}))
 
-#summarize.py
+
 from youtube_transcript_api import YouTubeTranscriptApi
 from transformers import pipeline, AutoTokenizer
+import torch
 import sys
 import json
 
-# Load summarizer and tokenizer once
-summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
-tokenizer = AutoTokenizer.from_pretrained("facebook/bart-large-cnn")
+device = 0 if torch.cuda.is_available() else -1
+MODEL_NAME = "sshleifer/distilbart-cnn-12-6"
+summarizer = pipeline("summarization", model=MODEL_NAME, device=device)
+tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
 
 def get_transcript(video_id):
     try:
@@ -39,28 +41,27 @@ def get_transcript(video_id):
         print(json.dumps({"error": str(e)}))
         sys.exit(1)
 
-def chunk_text(text, max_tokens=1000):
+def chunk_text(text, max_tokens=900):
     words = text.split()
     chunks, current_chunk, current_length = [], [], 0
 
     for word in words:
-        token_length = len(tokenizer.tokenize(word))
-        if current_length + token_length <= max_tokens:
+        token_len = len(tokenizer.tokenize(word))
+        if current_length + token_len <= max_tokens:
             current_chunk.append(word)
-            current_length += token_length
+            current_length += token_len
         else:
             chunks.append(" ".join(current_chunk))
             current_chunk = [word]
-            current_length = token_length
+            current_length = token_len
 
     if current_chunk:
         chunks.append(" ".join(current_chunk))
-
     return chunks
 
 def summarize_chunk(chunk):
     token_count = len(tokenizer.tokenize(chunk))
-    max_len = min(512, int(token_count * 0.7))
+    max_len = min(384, int(token_count * 0.7))
     min_len = max(30, int(token_count * 0.3))
     if min_len >= max_len:
         min_len = max(20, max_len - 20)
@@ -70,38 +71,32 @@ def summarize_chunk(chunk):
         max_length=max_len,
         min_length=min_len,
         do_sample=False
-    )[0]['summary_text']
+    )[0]["summary_text"]
 
 def summarize_long_text(text):
     chunks = chunk_text(text)
-    summaries = []
+    first_level_summaries = []
 
     for i, chunk in enumerate(chunks):
         try:
-            summaries.append(summarize_chunk(chunk))
+            first_level_summaries.append(summarize_chunk(chunk))
         except Exception as e:
-            summaries.append(f"[Error summarizing chunk {i + 1}: {str(e)}]")
+            first_level_summaries.append(f"[Error in chunk {i + 1}: {str(e)}]")
 
-    final_input = " ".join(summaries)
-    tokens = tokenizer(final_input, truncation=True, max_length=1024, return_tensors="pt")
+    combined_summary = " ".join(first_level_summaries)
+    combined_tokens = tokenizer.tokenize(combined_summary)
 
-    final_input = tokenizer.decode(tokens.input_ids[0], skip_special_tokens=True)
-    final_token_count = tokens.input_ids.shape[1]
-
-    if final_token_count <= 100:
-        return final_input  # already short, skip summarizing
-
-    final_max = min(512, int(final_token_count * 0.7))
-    final_min = max(50, int(final_token_count * 0.3))
-    if final_min >= final_max:
-        final_min = max(30, final_max - 20)
-
-    return summarizer(
-        final_input,
-        max_length=final_max,
-        min_length=final_min,
-        do_sample=False
-    )[0]['summary_text']
+    if len(combined_tokens) > 1024:
+        second_level_chunks = chunk_text(combined_summary, max_tokens=800)
+        final_summaries = []
+        for i, chunk in enumerate(second_level_chunks):
+            try:
+                final_summaries.append(summarize_chunk(chunk))
+            except Exception as e:
+                final_summaries.append(f"[Error in final chunk {i + 1}: {str(e)}]")
+        return " ".join(final_summaries)
+    else:
+        return summarize_chunk(combined_summary)
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
@@ -111,6 +106,10 @@ if __name__ == "__main__":
     video_url = sys.argv[1]
     video_id = video_url.split("v=")[-1].split("&")[0]
 
+    print("Fetching transcript...", file=sys.stderr)
     transcript = get_transcript(video_id)
+
+    print("Generating summary...", file=sys.stderr)
     summary = summarize_long_text(transcript)
-    print(json.dumps({"summary": summary}))
+
+    print(json.dumps({"summary": summary}, ensure_ascii=False))
