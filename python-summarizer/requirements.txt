@@ -1,0 +1,8 @@
+# Core dependencies for transcript extraction and summarization
+youtube-transcript-api==0.6.1
+transformers==4.41.2
+torch>=2.0.0
+sentencepiece==0.2.0
+
+# Optional: Use ChatGPT (OpenAI) for summarization
+openai==1.30.5
