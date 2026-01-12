@@ -95,13 +95,13 @@ export default function Index() {
 
       // Set basic video data from URL
       setVideoData({
-        title: "YouTube Video",
+        title: data.title || "YouTube Video",
         thumbnail: videoId
           ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
           : "",
-        duration: "Loading...",
-        channel: "Loading...",
-        views: "Loading...",
+        duration: data.duration || "",
+        channel: data.channel || "",
+        views: data.views || "",
       });
 
       // Set summary data from API response (backend only returns summary)
@@ -336,22 +336,30 @@ export default function Index() {
                       <Play className="w-8 h-8 text-white ml-1" />
                     </div>
                   </div>
-                  <Badge className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-sm">
-                    <Clock className="w-3 h-3 mr-1" />
-                    {videoData.duration}
-                  </Badge>
+                  {videoData.duration && (
+                    <Badge className="absolute bottom-3 right-3 bg-black/70 backdrop-blur-sm">
+                      <Clock className="w-3 h-3 mr-1" />
+                      {videoData.duration}
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex-1">
                   <h3 className="text-2xl font-semibold mb-4 line-clamp-2 group-hover:text-primary transition-colors duration-300">
                     {videoData.title}
                   </h3>
-                  <div className="flex items-center gap-6 text-muted-foreground mb-4">
-                    <div className="flex items-center gap-2">
-                      <User className="w-5 h-5" />
-                      <span className="text-lg">{videoData.channel}</span>
+                  {(videoData.channel || videoData.views) && (
+                    <div className="flex items-center gap-6 text-muted-foreground mb-4">
+                      {videoData.channel && (
+                        <div className="flex items-center gap-2">
+                          <User className="w-5 h-5" />
+                          <span className="text-lg">{videoData.channel}</span>
+                        </div>
+                      )}
+                      {videoData.views && (
+                        <div className="text-lg">{videoData.views}</div>
+                      )}
                     </div>
-                    <div className="text-lg">{videoData.views}</div>
-                  </div>
+                  )}
                   <Badge
                     variant="outline"
                     className="text-green-600 border-green-600/30 bg-green-600/10"

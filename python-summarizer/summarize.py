@@ -48,6 +48,12 @@ def get_transcript(video_url):
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(video_url, download=False)
             
+            # Extract video metadata
+            video_title = info.get('title', 'YouTube Video')
+            video_channel = info.get('uploader', 'Unknown Channel')
+            video_duration = info.get('duration', 0)
+            video_views = info.get('view_count', 0)
+            
             # Get subtitles
             import requests
             subtitle_url = None
@@ -120,7 +126,15 @@ def get_transcript(video_url):
             # Remove multiple spaces
             full_text = ' '.join(full_text.split())
             
-            return full_text if full_text else None
+            # Format metadata
+            metadata = {
+                'title': video_title,
+                'channel': video_channel,
+                'duration': format_duration(video_duration),
+                'views': format_views(video_views)
+            }
+            
+            return full_text if full_text else None, metadata
                 
     except Exception as e:
         # User-friendly error messages instead of technical details
@@ -209,6 +223,27 @@ def summarize_long_text(text):
     
     return final_text
 
+def format_duration(seconds):
+    """Convert seconds to MM:SS or HH:MM:SS format"""
+    if not seconds:
+        return ""
+    hours = seconds // 3600
+    minutes = (seconds % 3600) // 60
+    secs = seconds % 60
+    if hours > 0:
+        return f"{hours}:{minutes:02d}:{secs:02d}"
+    return f"{minutes}:{secs:02d}"
+
+def format_views(count):
+    """Format view count in readable format"""
+    if not count:
+        return ""
+    if count >= 1_000_000:
+        return f"{count / 1_000_000:.1f}M views"
+    if count >= 1_000:
+        return f"{count / 1_000:.1f}K views"
+    return f"{count} views"
+
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print(json.dumps({"error": "Missing YouTube URL argument"}))
@@ -217,13 +252,21 @@ if __name__ == "__main__":
     video_url = sys.argv[1]
 
     print("Fetching transcript...", file=sys.stderr)
-    transcript = get_transcript(video_url)
+    result = get_transcript(video_url)
     
-    if not transcript:
+    if not result or not result[0]:
         print(json.dumps({"error": "Unable to extract transcript. The video may not have English captions available."}))
         sys.exit(0)
+    
+    transcript, metadata = result
 
     print("Generating summary...", file=sys.stderr)
     summary = summarize_long_text(transcript)
 
-    print(json.dumps({"summary": summary}, ensure_ascii=False))
+    print(json.dumps({
+        "summary": summary,
+        "title": metadata['title'],
+        "channel": metadata['channel'],
+        "duration": metadata['duration'],
+        "views": metadata['views']
+    }, ensure_ascii=False))
