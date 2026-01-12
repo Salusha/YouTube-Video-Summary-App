@@ -80,7 +80,6 @@ npm run dev
 ```
 Frontend runs on: `http://localhost:8080`
 
-
 ## 📂 Project Structure
 
 ```
