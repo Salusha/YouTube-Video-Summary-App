@@ -80,9 +80,6 @@ npm run dev
 ```
 Frontend runs on: `http://localhost:8080`
 
-**Note:** The Python script runs automatically when you submit a video through the backend. No separate terminal needed.
-
-**First Run:** The AI model (~500MB) will download automatically on first use. This may take 1-2 minutes.
 
 ## 📂 Project Structure
 
