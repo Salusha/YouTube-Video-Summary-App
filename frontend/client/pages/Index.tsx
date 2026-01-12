@@ -83,30 +83,42 @@ export default function Index() {
 
       const data = await response.json();
 
+      // Check if API returned an error
+      if (data.error) {
+        setError(data.error);
+        setSummaryData(null);
+        return;
+      }
+
       // Extract video ID for thumbnail
       const videoId = extractVideoId(url);
 
       // Set basic video data from URL
-      // setVideoData({
-      //   title: "YouTube Video",
-      //   thumbnail: videoId
-      //     ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
-      //     : "",
-      //   duration: "Loading...",
-      //   channel: "Loading...",
-      //   views: "Loading...",
-      // });
+      setVideoData({
+        title: "YouTube Video",
+        thumbnail: videoId
+          ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`
+          : "",
+        duration: "Loading...",
+        channel: "Loading...",
+        views: "Loading...",
+      });
 
       // Set summary data from API response (backend only returns summary)
-      setSummaryData({
-        summary: data.summary || data || "Summary not available",
-        keyPoints: [], // No key points from backend
-        timestamp: new Date().toISOString(),
-      });
+      if (data.summary) {
+        setSummaryData({
+          summary: data.summary,
+          keyPoints: [], // No key points from backend
+          timestamp: new Date().toISOString(),
+        });
+      } else {
+        setError("No summary available");
+        setSummaryData(null);
+      }
     } catch (err) {
       console.error("Error processing video:", err);
       setError(
-        "Failed to process the video. Please make sure that the URL is valid.",
+        "Failed to process the video. Please check your internet connection and try again.",
       );
     } finally {
       setIsLoading(false);
