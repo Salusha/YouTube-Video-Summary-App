@@ -285,9 +285,9 @@ export default function Index() {
 
         {/* Error Message */}
         {error && (
-          <Alert className="mb-8 border-destructive/20 bg-destructive/5 backdrop-blur-sm">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error}</AlertDescription>
+          <Alert className="mb-8 border-destructive bg-destructive/10 backdrop-blur-sm">
+            <AlertCircle className="h-4 w-4 text-destructive" />
+            <AlertDescription className="text-destructive font-medium">{error}</AlertDescription>
           </Alert>
         )}
 
